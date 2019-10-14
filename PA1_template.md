@@ -5,39 +5,50 @@ output:
   html_document:
     keep_md: true
 ---
-```{r library, include=FALSE}
-library(dplyr)
-library(ggplot2)
-library(lubridate)
-```
+
 
 
 ## Loading and preprocessing the data
 
-```{r setup, echo=TRUE}
+
+```r
 unzip("activity.zip", exdir=".")
 data <- read.csv("activity.csv", sep = ",", na.strings = "NA", stringsAsFactors = F)
 data$day <- ymd(data$date)
 ```
 ## What is mean total number of steps taken per day?
-```{r, echo=TRUE, warning=FALSE}
+
+```r
 total <- data %>% group_by(day) %>% summarize(daysteps=sum(steps, na.rm = T)) %>% ungroup()
 ggplot(total)+
 geom_histogram(aes(x=day, y=daysteps), stat='identity')+
 labs(x="Day",
      y="Steps",
      title="Total Numbers of Steps Per Day")
-     
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-1-1.png)<!-- -->
+
+```r
 summary(total$daysteps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##       0    6778   10395    9354   12811   21194
+```
+
+```r
 mean <- round(mean(total$daysteps), digits = 0)
 ```
 
-#### *The mean total number of steps taken per day is **`r mean`**.* ####
+#### *The mean total number of steps taken per day is **9354**.* ####
 
 
 
 ## What is the average daily activity pattern?
-```{r, echo=TRUE}
+
+```r
 mean <- data %>% group_by(interval) %>% summarize(stepsMean=mean(steps, na.rm=T)) %>% ungroup()
 
 ggplot(data=mean, aes(x=interval, y=stepsMean))+
@@ -46,7 +57,11 @@ geom_line(linetype=1)+
 labs(x="Interval (Minute)",
      y="Average Steps Across Days",
      title="Average Daily Activity Pattern")
+```
 
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+```r
 maxstep <- max(mean$stepsMean)
 maxstep1 <- round(maxstep, digits = 0)
 maxinterval <- mean %>% 
@@ -55,14 +70,20 @@ maxinterval <- mean %>%
 max <- maxinterval[[1]]
 ```
 
-#### *The interval **`r max`** minutes contains the maximum number of average steps at **`r maxstep1`**.* ####
+#### *The interval **835** minutes contains the maximum number of average steps at **206**.* ####
 
 
 ## Imputing missing values
-```{r, echo=TRUE, warning=FALSE}
+
+```r
 sum(is.na(data$steps))
 ```
-```{r, echo=TRUE}
+
+```
+## [1] 2304
+```
+
+```r
 data2 <- left_join(data, mean, by="interval")
 datafix <- data2 %>% mutate(stepfix=ifelse(is.na(steps), stepsMean, steps))
 
@@ -74,17 +95,33 @@ geom_histogram(aes(x=day, y=daysteps), stat='identity')+
 labs(x="Day",
      y="Steps",
      title="Total Numbers of Steps Per Day with Missing steps Filled")
-     
-summary(totalfix$daysteps)
-mean <- round(mean(totalfix$daysteps), digits = 0)
+```
 
+```
+## Warning: Ignoring unknown parameters: binwidth, bins, pad
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+```r
+summary(totalfix$daysteps)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    9819   10766   10766   12811   21194
+```
+
+```r
+mean <- round(mean(totalfix$daysteps), digits = 0)
 ```
 #### *After missing values for steps was filled with mean for 5-minute interval,  both mean and median total number of steps taken per date **increased**.* ####
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-```{r, echo=TRUE}
+
+```r
 datafix_wd <- datafix %>% 
             mutate(weekDay=wday(ymd(date),label=T), daytype=ifelse(weekDay %in% c('Sat','Sun'), "weekend","weekday"))
 
@@ -98,9 +135,7 @@ ggplot(wdmean, aes(x=interval, y=stepsMean2))+
     facet_wrap(~daytype, nrow = 2)+
     labs(y="Number of Steps",
          title="Difference in activity pattern")
-
-
-
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
